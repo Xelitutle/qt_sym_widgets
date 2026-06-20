@@ -1,0 +1,8 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.buildDirectory": "${workspaceFolder}/build/.build_msvc",
+    "cmake.configureSettings": {
+        "Qt5_DIR": "C:/Qt/Qt5.12.1/5.12.1/msvc2017_64"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
