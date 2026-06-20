@@ -140,6 +140,14 @@ int main(int argc, char* argv[])
     auto* floatInput = new SymFloatInput(-999.999, 999.999, 3, outer);
     floatInput->moveToCell(15, 8);
 
+    auto* centerLabel = new SymLabel(QStringLiteral("Многострочный\nпо\nцентру"), outer);
+    centerLabel->setAlignment(SymLabel::Alignment::Center);
+    centerLabel->moveToCell(1, 11);
+
+    auto* rightLabel = new SymLabel(QStringLiteral("Многострочный\nпо\nправому краю"), outer);
+    rightLabel->setAlignment(SymLabel::Alignment::Right);
+    rightLabel->moveToCell(1, 14);
+
     auto* quitButton = new SymButton(QStringLiteral("Выход"), outer);
     quitButton->moveToCell(3, 21);
 
