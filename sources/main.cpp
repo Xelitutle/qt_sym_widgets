@@ -1,7 +1,10 @@
 #include <QApplication>
+#include <QImage>
+#include <QPainter>
 #include <QTimer>
+#include <QWidget>
 
-#include "symwidgets/Label.h"
+#include "symwidgets/SymLabel.h"
 #include "symwidgets/SymButton.h"
 #include "symwidgets/SymCheckBox.h"
 #include "symwidgets/SymFloatInput.h"
@@ -16,7 +19,7 @@ namespace {
 Theme makeTheme()
 {
     Theme theme;
-    theme.substrateColor = QColor(20, 24, 28);
+    theme.substrateColor = QColor(67, 67, 67, 127);
     theme.substrateAlpha = 235;
     theme.frameColor = QColor(255, 255, 255);
     theme.textColor = QColor(127, 127, 127);
@@ -27,6 +30,38 @@ Theme makeTheme()
     theme.widgetColorDisabled = QColor(100, 100, 100);
     return theme;
 }
+
+// Diagonal-ramp GRAY8 test pattern ("косой матрас") — value at each pixel is
+// (x + y) wrapped into a byte, producing repeating 45-degree stripes.
+QImage makeDiagonalRampImage(int width, int height)
+{
+    QImage image(width, height, QImage::Format_Grayscale8);
+    for (int y = 0; y < height; ++y) {
+        uchar* line = image.scanLine(y);
+        for (int x = 0; x < width; ++x)
+            line[x] = static_cast<uchar>((x + y) & 0xFF);
+    }
+    return image;
+}
+
+class BackgroundWidget : public QWidget {
+public:
+    explicit BackgroundWidget(QImage image, QWidget* parent = nullptr)
+        : QWidget(parent)
+        , m_image(std::move(image))
+    {
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter painter(this);
+        painter.drawImage(rect(), m_image);
+    }
+
+private:
+    QImage m_image;
+};
 
 } // namespace
 
@@ -40,12 +75,26 @@ int main(int argc, char* argv[])
     metrics.screenWidthPx = 1024;
     metrics.screenHeightPx = 768;
 
-    SymMainWidget mainWidget(metrics, makeTheme(), QStringLiteral(ETC_DIR) + "/font/andalemono.ttf");
-    mainWidget.setWindowTitle(QStringLiteral("SymWidgets — демонстрация"));
+    auto* background = new BackgroundWidget(makeDiagonalRampImage(metrics.screenWidthPx, metrics.screenHeightPx));
+    background->setWindowTitle(QStringLiteral("SymWidgets — демонстрация"));
+    background->resize(metrics.screenWidthPx, metrics.screenHeightPx);
+
+    SymMainWidget mainWidget(metrics, makeTheme(), QStringLiteral(ETC_DIR) + "/font/andalemono.ttf", background);
+
+    // SymMainWidget auto-sizes itself to cols*cellWidthPx x rows*cellHeightPx,
+    // which can be smaller than the window when the grid doesn't divide it
+    // evenly. The substrate itself should still cover the whole window, so
+    // stretch it to the full background size (TZ explicitly sanctions this
+    // QWidget* cast as the way to bypass the hidden resize()) and instead
+    // center the grid content inside it by offsetting the root SymFrame.
+    static_cast<QWidget*>(&mainWidget)->resize(metrics.screenWidthPx, metrics.screenHeightPx);
 
     auto* outer = new SymFrame(QStringLiteral("Знакосимвольный интерфейс"), &mainWidget);
+    const int gridWidthPx = metrics.cols * metrics.cellWidthPx();
+    const int gridHeightPx = metrics.rows * metrics.cellHeightPx();
+    outer->move((metrics.screenWidthPx - gridWidthPx) / 2, (metrics.screenHeightPx - gridHeightPx) / 2);
 
-    auto* statusLabel = new Label(QStringLiteral("Статус: готов"), outer);
+    auto* statusLabel = new SymLabel(QStringLiteral("Статус: готов"), outer);
     statusLabel->moveToCell(1, 1);
 
     auto* nested = new SymFrame(QStringLiteral("Вложенная рамка"), 4, 20, outer);
@@ -57,13 +106,13 @@ int main(int argc, char* argv[])
     auto* cancelButton = new SymButton(QStringLiteral("Отмена"), nested);
     cancelButton->moveToCell(2, 2);
 
-    auto* checkLabel = new Label(QStringLiteral("Флаг:"), outer);
+    auto* checkLabel = new SymLabel(QStringLiteral("Флаг:"), outer);
     checkLabel->moveToCell(1, 6);
 
     auto* checkBox = new SymCheckBox(outer);
     checkBox->moveToCell(7, 6);
 
-    auto* intLabel = new Label(QStringLiteral("Целое:"), outer);
+    auto* intLabel = new SymLabel(QStringLiteral("Целое:"), outer);
     intLabel->moveToCell(1, 7);
 
     auto* intInput = new SymIntInput(-99, 99, outer);
@@ -73,7 +122,7 @@ int main(int argc, char* argv[])
     intInputDis->moveToCell(16, 7);
     intInputDis->setEnabled(false);
 
-    auto* blinkLabel = new Label(QStringLiteral("Мигающее:"), outer);
+    auto* blinkLabel = new SymLabel(QStringLiteral("Мигающее:"), outer);
     blinkLabel->moveToCell(1, 10);
 
     auto* blinkInput = new SymIntInput(0, 99, outer);
@@ -85,7 +134,7 @@ int main(int argc, char* argv[])
     });
     blinkTimer->start(3000);
 
-    auto* floatLabel = new Label(QStringLiteral("Вещественное:"), outer);
+    auto* floatLabel = new SymLabel(QStringLiteral("Вещественное:"), outer);
     floatLabel->moveToCell(1, 8);
 
     auto* floatInput = new SymFloatInput(-999.999, 999.999, 3, outer);
@@ -111,7 +160,7 @@ int main(int argc, char* argv[])
     });
     QObject::connect(quitButton, &SymButton::pressed, &app, &QApplication::quit);
 
-    mainWidget.show();
+    background->show();
     okButton->setFocus(Qt::OtherFocusReason);
 
     return app.exec();

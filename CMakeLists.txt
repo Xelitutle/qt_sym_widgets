@@ -13,7 +13,7 @@ set(SOURCES
     sources/symwidgets/SymWidget.cpp
     sources/symwidgets/SymMainWidget.cpp
     sources/symwidgets/SymFrame.cpp
-    sources/symwidgets/Label.cpp
+    sources/symwidgets/SymLabel.cpp
     sources/symwidgets/SymButton.cpp
     sources/symwidgets/SymCheckBox.cpp
     sources/symwidgets/SymIntInput.cpp
@@ -26,7 +26,7 @@ set(HEADERS
     include/symwidgets/SymWidget.h
     include/symwidgets/SymMainWidget.h
     include/symwidgets/SymFrame.h
-    include/symwidgets/Label.h
+    include/symwidgets/SymLabel.h
     include/symwidgets/SymButton.h
     include/symwidgets/SymCheckBox.h
     include/symwidgets/SymIntInput.h

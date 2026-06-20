@@ -4,10 +4,10 @@
 
 namespace sym {
 
-class Label : public SymWidget {
+class SymLabel : public SymWidget {
     Q_OBJECT
 public:
-    explicit Label(const QString& text, SymWidget* parent = nullptr);
+    explicit SymLabel(const QString& text, SymWidget* parent = nullptr);
 
     void setText(const QString& text);
     QString text() const { return m_text; }
